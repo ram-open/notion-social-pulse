@@ -18,6 +18,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +64,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				notion: {
+					gray: {
+						50: 'hsl(var(--notion-gray-50))',
+						100: 'hsl(var(--notion-gray-100))',
+						200: 'hsl(var(--notion-gray-200))',
+						300: 'hsl(var(--notion-gray-300))',
+						500: 'hsl(var(--notion-gray-500))',
+						700: 'hsl(var(--notion-gray-700))',
+						900: 'hsl(var(--notion-gray-900))',
+					}
 				}
+			},
+			backgroundImage: {
+				'gradient-subtle': 'var(--gradient-subtle)',
+			},
+			boxShadow: {
+				'soft': 'var(--shadow-soft)',
+				'card': 'var(--shadow-card)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
