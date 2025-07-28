@@ -106,23 +106,35 @@ export function ConnectAccountsForm({ onConnect }: ConnectAccountsFormProps) {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-medium"
-              disabled={!isFormValid || isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Connecting Accounts...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5" />
-                  Connect Accounts
-                </div>
-              )}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                disabled={!isFormValid || isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Connecting Accounts...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Connect Accounts
+                  </div>
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 text-base font-medium"
+                onClick={onConnect}
+                disabled={isLoading}
+              >
+                Try Demo Dashboard
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
