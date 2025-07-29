@@ -88,16 +88,13 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
       if (!element) return;
 
       const canvas = await html2canvas(element, {
-        scale: 1, // Reduced from 2 to 1 for smaller file size
+        scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        removeContainer: true
+        backgroundColor: "#ffffff"
       });
 
-      // Use JPEG with compression for much smaller file size
-      const imgData = canvas.toDataURL("image/jpeg", 0.7); // 70% quality
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       
       // Calculate dimensions
@@ -106,6 +103,9 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
       const imgWidth = pdfWidth - 20; // 10mm margin on each side
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
+      let heightLeft = imgHeight;
+      let position = 10; // 10mm top margin
+
       // Add title page
       pdf.setFontSize(20);
       pdf.text(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Account Analytics`, 10, 20);
@@ -117,37 +117,16 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
       pdf.text(`Period: ${dateText}`, 10, 30);
       pdf.text(`Generated on: ${format(new Date(), "MMM dd, yyyy")}`, 10, 40);
 
-      // If content is too tall, split it across multiple pages
-      const pageHeight = pdfHeight - 60; // Account for margins and header
-      let yPosition = 50;
-      
-      if (imgHeight <= pageHeight) {
-        // Single page
-        pdf.addImage(imgData, "JPEG", 10, yPosition, imgWidth, imgHeight);
-      } else {
-        // Multiple pages
-        const totalPages = Math.ceil(imgHeight / pageHeight);
-        
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) pdf.addPage();
-          
-          const sourceY = i * (canvas.height / totalPages);
-          const sourceHeight = canvas.height / totalPages;
-          
-          // Create a temporary canvas for this section
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = sourceHeight;
-          
-          if (tempCtx) {
-            tempCtx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
-            const sectionImgData = tempCanvas.toDataURL("image/jpeg", 0.7);
-            const sectionHeight = Math.min(pageHeight, imgHeight - (i * pageHeight));
-            
-            pdf.addImage(sectionImgData, "JPEG", 10, i === 0 ? yPosition : 10, imgWidth, sectionHeight);
-          }
-        }
+      // Add the chart image
+      pdf.addImage(imgData, "PNG", 10, 50, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 60);
+
+      // Add new pages if content exceeds page height
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
       }
 
       pdf.save(`${platform}-analytics-${dateRange}days.pdf`);
