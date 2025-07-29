@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Instagram, Facebook, Linkedin } from "lucide-react";
+import { ArrowLeft, Instagram, Facebook, Linkedin, Settings } from "lucide-react";
 import { Dashboard } from "./Dashboard";
 
 interface PortfolioDetailProps {
@@ -120,12 +120,28 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
                       <p className="text-sm text-notion-text-secondary">Followers</p>
                     </div>
                     
-                    <Badge 
-                      variant={platform.connected ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {platform.connected ? "Connected" : "Not Connected"}
-                    </Badge>
+                    <div className="flex items-center justify-center gap-2">
+                      <Badge 
+                        variant={platform.connected ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {platform.connected ? "Connected" : "Not Connected"}
+                      </Badge>
+                      {platform.connected && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-notion-text-secondary hover:text-notion-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle configure action here
+                            console.log(`Configure ${platform.name} for ${portfolio.name}`);
+                          }}
+                        >
+                          <Settings className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
