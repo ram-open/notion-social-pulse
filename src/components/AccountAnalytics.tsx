@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Eye, Users, Activity, User, Info } from "lucide-react";
+import { CalendarIcon, Eye, Users, Activity, User, Info, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 interface AccountAnalyticsProps {
   platform: string;
@@ -77,6 +80,63 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
     }
   };
 
+  const exportToPDF = async () => {
+    try {
+      toast("Generating PDF...");
+      
+      const element = document.getElementById("analytics-content");
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      // Calculate dimensions
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20; // 10mm margin on each side
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10; // 10mm top margin
+
+      // Add title page
+      pdf.setFontSize(20);
+      pdf.text(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Account Analytics`, 10, 20);
+      
+      pdf.setFontSize(12);
+      const dateText = dateRange === "custom" && customDateFrom && customDateTo 
+        ? `${format(customDateFrom, "MMM dd, yyyy")} - ${format(customDateTo, "MMM dd, yyyy")}`
+        : `Last ${dateRange} days`;
+      pdf.text(`Period: ${dateText}`, 10, 30);
+      pdf.text(`Generated on: ${format(new Date(), "MMM dd, yyyy")}`, 10, 40);
+
+      // Add the chart image
+      pdf.addImage(imgData, "PNG", 10, 50, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 60);
+
+      // Add new pages if content exceeds page height
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`${platform}-analytics-${dateRange}days.pdf`);
+      toast("PDF exported successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast("Failed to export PDF. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-notion-bg">
       {/* Header with Date Filter */}
@@ -87,8 +147,9 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
             <p className="text-sm text-notion-text-secondary">Monitor your account performance and engagement</p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            <Select value={dateRange} onValueChange={handleDateRangeChange}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Select value={dateRange} onValueChange={handleDateRangeChange}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
@@ -149,13 +210,23 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
                 </Popover>
               </div>
             )}
+            </div>
+            
+            <Button 
+              onClick={exportToPDF}
+              variant="outline" 
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export PDF
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Analytics Content */}
       <div className="p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div id="analytics-content" className="max-w-7xl mx-auto space-y-6">
           {/* Views Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="border-notion-border">
