@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Instagram, Facebook, Linkedin, Settings } from "lucide-react";
 import { Dashboard } from "./Dashboard";
+import { AccountAnalytics } from "./AccountAnalytics";
 
 interface PortfolioDetailProps {
   portfolioId: string;
@@ -66,7 +67,7 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
             </div>
           </div>
         </div>
-        <Dashboard />
+        <AccountAnalytics platform={selectedPlatform} />
       </div>
     );
   }
