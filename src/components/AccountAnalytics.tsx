@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Eye, Users, Activity, User, Info, Download } from "lucide-react";
+import { CalendarIcon, Eye, Users, Activity, User, Info, Download, TrendingUp, Heart, UserPlus, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -15,48 +15,87 @@ interface AccountAnalyticsProps {
   platform: string;
 }
 
-const viewsData = {
-  totalViews: 533752,
-  followers: { percentage: 1.5, color: "bg-purple-500" },
-  nonFollowers: { percentage: 98.5, color: "bg-gray-600" },
-  accountsReached: 144143,
-  contentBreakdown: [
-    { type: "Posts", percentage: 88.4, color: "bg-purple-500" },
-    { type: "Reels", percentage: 9.2, color: "bg-purple-400" },
-    { type: "Stories", percentage: 2.0, color: "bg-purple-300" },
-    { type: "Videos", percentage: 0.3, color: "bg-purple-200" },
-  ]
+// Instagram data
+const instagramData = {
+  views: {
+    totalViews: 533752,
+    followers: { percentage: 1.5, color: "bg-purple-500" },
+    nonFollowers: { percentage: 98.5, color: "bg-gray-600" },
+    accountsReached: 144143,
+    contentBreakdown: [
+      { type: "Posts", percentage: 88.4, color: "bg-purple-500" },
+      { type: "Reels", percentage: 9.2, color: "bg-purple-400" },
+      { type: "Stories", percentage: 2.0, color: "bg-purple-300" },
+      { type: "Videos", percentage: 0.3, color: "bg-purple-200" },
+    ]
+  },
+  interactions: {
+    totalInteractions: 461,
+    followers: { percentage: 0.4, color: "bg-purple-500" },
+    nonFollowers: { percentage: 99.6, color: "bg-gray-600" },
+    accountsEngaged: 435,
+    contentBreakdown: [
+      { type: "Posts", percentage: 59.5, color: "bg-purple-500" },
+      { type: "Reels", percentage: 40.5, color: "bg-purple-400" },
+    ]
+  },
+  profile: {
+    profileActivity: 3420,
+    profileVisits: 3324,
+    externalLinkTaps: 96,
+  },
+  followers: {
+    totalFollowers: 954,
+    mostActiveTimes: [
+      { time: "12a", count: 218, percentage: 100 },
+      { time: "3a", count: 218, percentage: 100 },
+      { time: "6a", count: 240, percentage: 110 },
+      { time: "9a", count: 225, percentage: 103 },
+      { time: "12p", count: 88, percentage: 40 },
+      { time: "3p", count: 48, percentage: 22 },
+      { time: "6p", count: 152, percentage: 70 },
+      { time: "9p", count: 195, percentage: 89 },
+    ]
+  }
 };
 
-const interactionsData = {
-  totalInteractions: 461,
-  followers: { percentage: 0.4, color: "bg-purple-500" },
-  nonFollowers: { percentage: 99.6, color: "bg-gray-600" },
-  accountsEngaged: 435,
-  contentBreakdown: [
-    { type: "Posts", percentage: 59.5, color: "bg-purple-500" },
-    { type: "Reels", percentage: 40.5, color: "bg-purple-400" },
-  ]
-};
-
-const profileData = {
-  profileActivity: 3420,
-  profileVisits: 3324,
-  externalLinkTaps: 96,
-};
-
-const followersData = {
-  totalFollowers: 954,
-  mostActiveTimes: [
-    { time: "12a", count: 218, percentage: 100 },
-    { time: "3a", count: 218, percentage: 100 },
-    { time: "6a", count: 240, percentage: 110 },
-    { time: "9a", count: 225, percentage: 103 },
-    { time: "12p", count: 88, percentage: 40 },
-    { time: "3p", count: 48, percentage: 22 },
-    { time: "6p", count: 152, percentage: 70 },
-    { time: "9p", count: 195, percentage: 89 },
-  ]
+// LinkedIn data
+const linkedinData = {
+  impressions: {
+    totalImpressions: 45670,
+    organic: { percentage: 78.5, color: "bg-blue-500" },
+    paid: { percentage: 21.5, color: "bg-blue-300" },
+    uniqueImpressions: 38925,
+    contentBreakdown: [
+      { type: "Posts", percentage: 65.2, color: "bg-blue-500" },
+      { type: "Articles", percentage: 28.8, color: "bg-blue-400" },
+      { type: "Videos", percentage: 6.0, color: "bg-blue-300" },
+    ]
+  },
+  reactions: {
+    totalReactions: 1247,
+    likes: { count: 892, percentage: 71.5, color: "bg-blue-500" },
+    comments: { count: 203, percentage: 16.3, color: "bg-blue-400" },
+    shares: { count: 152, percentage: 12.2, color: "bg-blue-300" },
+    engagementRate: 2.73
+  },
+  newFollowers: {
+    totalNewFollowers: 156,
+    organicFollowers: { count: 134, percentage: 85.9, color: "bg-blue-500" },
+    paidFollowers: { count: 22, percentage: 14.1, color: "bg-blue-300" },
+    followerGrowthRate: 3.2
+  },
+  pageViews: {
+    totalPageViews: 2845,
+    uniqueVisitors: 2156,
+    averageTimeOnPage: "2:34",
+    topSources: [
+      { source: "LinkedIn Feed", percentage: 45.2, color: "bg-blue-500" },
+      { source: "Search", percentage: 28.7, color: "bg-blue-400" },
+      { source: "Direct", percentage: 16.8, color: "bg-blue-300" },
+      { source: "External", percentage: 9.3, color: "bg-blue-200" },
+    ]
+  }
 };
 
 const topContent = [
@@ -70,6 +109,9 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
   const [customDateFrom, setCustomDateFrom] = useState<Date>();
   const [customDateTo, setCustomDateTo] = useState<Date>();
   const [showCustomDate, setShowCustomDate] = useState(false);
+
+  const isLinkedIn = platform.toLowerCase() === 'linkedin';
+  const data = isLinkedIn ? linkedinData : instagramData;
 
   const handleDateRangeChange = (value: string) => {
     setDateRange(value);
@@ -227,263 +269,464 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
       {/* Analytics Content */}
       <div className="p-6">
         <div id="analytics-content" className="max-w-7xl mx-auto space-y-6">
-          {/* Views Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-notion-text-secondary" />
-                  <CardTitle className="text-notion-text">Views</CardTitle>
-                  <Info className="h-4 w-4 text-notion-text-secondary" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-3xl font-bold text-notion-text">{viewsData.totalViews.toLocaleString()}</p>
-                  <p className="text-sm text-notion-text-secondary">Views</p>
-                </div>
+          {isLinkedIn ? (
+            <>
+              {/* LinkedIn Impressions Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Impressions</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof linkedinData).impressions.totalImpressions.toLocaleString()}</p>
+                      <p className="text-sm text-notion-text-secondary">Total impressions</p>
+                    </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">Followers</span>
-                    <span className="text-sm font-medium text-notion-text">{viewsData.followers.percentage}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">Non-followers</span>
-                    <span className="text-sm font-medium text-notion-text">{viewsData.nonFollowers.percentage}%</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-notion-border">
-                  <p className="text-sm text-notion-text-secondary mb-1">Accounts reached</p>
-                  <p className="text-2xl font-bold text-notion-text">{viewsData.accountsReached.toLocaleString()}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-notion-text">By content type</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2 mb-4">
-                  <Button variant="default" size="sm" className="rounded-full">All</Button>
-                  <Button variant="secondary" size="sm" className="rounded-full">Followers</Button>
-                  <Button variant="secondary" size="sm" className="rounded-full">Non-followers</Button>
-                </div>
-
-                <div className="space-y-3">
-                  {viewsData.contentBreakdown.map((item, index) => (
-                    <div key={index} className="space-y-1">
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-notion-text">{item.type}</span>
-                        <span className="text-sm font-medium text-notion-text">{item.percentage}%</span>
+                        <span className="text-sm text-notion-text">Organic</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).impressions.organic.percentage}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`${item.color} h-2 rounded-full`} 
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Paid</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).impressions.paid.percentage}%</span>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    Followers
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                    Non-followers
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Interactions Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-notion-text-secondary" />
-                  <CardTitle className="text-notion-text">Interactions</CardTitle>
-                  <Info className="h-4 w-4 text-notion-text-secondary" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-3xl font-bold text-notion-text">{interactionsData.totalInteractions}</p>
-                  <p className="text-sm text-notion-text-secondary">Interactions</p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">Followers</span>
-                    <span className="text-sm font-medium text-notion-text">{interactionsData.followers.percentage}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">Non-followers</span>
-                    <span className="text-sm font-medium text-notion-text">{interactionsData.nonFollowers.percentage}%</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-notion-border">
-                  <p className="text-sm text-notion-text-secondary mb-1">Accounts engaged</p>
-                  <p className="text-2xl font-bold text-notion-text">{interactionsData.accountsEngaged}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-notion-text">By content interactions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {interactionsData.contentBreakdown.map((item, index) => (
-                    <div key={index} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-notion-text">{item.type}</span>
-                        <span className="text-sm font-medium text-notion-text">{item.percentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`${item.color} h-2 rounded-full`} 
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-1">Unique impressions</p>
+                      <p className="text-2xl font-bold text-notion-text">{(data as typeof linkedinData).impressions.uniqueImpressions.toLocaleString()}</p>
                     </div>
-                  ))}
-                </div>
+                  </CardContent>
+                </Card>
 
-                <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    Followers and non-followers
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Profile & Followers Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-notion-text-secondary" />
-                  <CardTitle className="text-notion-text">Profile</CardTitle>
-                  <Info className="h-4 w-4 text-notion-text-secondary" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-3xl font-bold text-notion-text">{profileData.profileActivity.toLocaleString()}</p>
-                  <p className="text-sm text-notion-text-secondary">Profile activity</p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">Profile visits</span>
-                    <span className="text-lg font-medium text-notion-text">{profileData.profileVisits.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-notion-text">External link taps</span>
-                    <span className="text-lg font-medium text-notion-text">{profileData.externalLinkTaps}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-notion-border">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-notion-text-secondary" />
-                  <CardTitle className="text-notion-text">Followers</CardTitle>
-                  <Info className="h-4 w-4 text-notion-text-secondary" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-3xl font-bold text-notion-text">{followersData.totalFollowers}</p>
-                  <p className="text-sm text-notion-text-secondary">Total followers</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-notion-text mb-3">Most active times</p>
-                  
-                  <div className="flex gap-1 mb-4">
-                    {['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'].map((day, index) => (
-                      <Button 
-                        key={day} 
-                        variant={index === 0 ? "default" : "secondary"} 
-                        size="sm" 
-                        className="w-10 h-8 text-xs rounded"
-                      >
-                        {day}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    {followersData.mostActiveTimes.map((time, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm text-notion-text w-8">{time.time}</span>
-                        <div className="flex-1 mx-3">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-notion-text">By content type</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      {(data as typeof linkedinData).impressions.contentBreakdown.map((item, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-notion-text">{item.type}</span>
+                            <span className="text-sm font-medium text-notion-text">{item.percentage}%</span>
+                          </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
-                              className="bg-purple-500 h-2 rounded-full" 
-                              style={{ width: `${time.percentage}%` }}
+                              className={`${item.color} h-2 rounded-full`} 
+                              style={{ width: `${item.percentage}%` }}
                             ></div>
                           </div>
                         </div>
-                        <span className="text-sm font-medium text-notion-text w-8 text-right">{time.count}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      Followers
+                      ))}
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-          {/* Top Content Section */}
-          <Card className="border-notion-border">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-notion-text">Top content based on views</CardTitle>
-                <Button variant="ghost" size="sm" className="text-notion-accent">See all</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {topContent.map((content, index) => (
-                  <Card key={index} className="border-notion-border/50">
-                    <CardContent className="p-4 text-center">
-                      <div className="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                        <span className="text-gray-400">Content Preview</span>
+              {/* LinkedIn Reactions Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Reactions</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof linkedinData).reactions.totalReactions.toLocaleString()}</p>
+                      <p className="text-sm text-notion-text-secondary">Total reactions</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Likes</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.likes.count}</span>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Comments</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.comments.count}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Shares</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.shares.count}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-1">Engagement rate</p>
+                      <p className="text-2xl font-bold text-notion-text">{(data as typeof linkedinData).reactions.engagementRate}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-notion-text">Reaction breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-notion-text">Likes</span>
+                          <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.likes.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`${(data as typeof linkedinData).reactions.likes.color} h-2 rounded-full`} 
+                            style={{ width: `${(data as typeof linkedinData).reactions.likes.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-notion-text">Comments</span>
+                          <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.comments.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`${(data as typeof linkedinData).reactions.comments.color} h-2 rounded-full`} 
+                            style={{ width: `${(data as typeof linkedinData).reactions.comments.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-notion-text">Shares</span>
+                          <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).reactions.shares.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`${(data as typeof linkedinData).reactions.shares.color} h-2 rounded-full`} 
+                            style={{ width: `${(data as typeof linkedinData).reactions.shares.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* LinkedIn New Followers & Page Views Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <UserPlus className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">New Followers</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof linkedinData).newFollowers.totalNewFollowers}</p>
+                      <p className="text-sm text-notion-text-secondary">New followers</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Organic</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).newFollowers.organicFollowers.count}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Paid</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).newFollowers.paidFollowers.count}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-1">Growth rate</p>
+                      <p className="text-2xl font-bold text-notion-text">{(data as typeof linkedinData).newFollowers.followerGrowthRate}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Page Views</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof linkedinData).pageViews.totalPageViews.toLocaleString()}</p>
+                      <p className="text-sm text-notion-text-secondary">Total page views</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Unique visitors</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).pageViews.uniqueVisitors.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Avg. time on page</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof linkedinData).pageViews.averageTimeOnPage}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-2">Top traffic sources</p>
                       <div className="space-y-2">
-                        <p className="text-lg font-semibold text-notion-text">{content.views}</p>
-                        <p className="text-sm text-notion-text-secondary">{content.date}</p>
+                        {(data as typeof linkedinData).pageViews.topSources.map((source, index) => (
+                          <div key={index} className="flex justify-between items-center">
+                            <span className="text-xs text-notion-text">{source.source}</span>
+                            <span className="text-xs font-medium text-notion-text">{source.percentage}%</span>
+                          </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              
-              <Card className="border-notion-border mt-6">
+            </>
+          ) : (
+            <>
+              {/* Instagram Views Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Views</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof instagramData).views.totalViews.toLocaleString()}</p>
+                      <p className="text-sm text-notion-text-secondary">Views</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Followers</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof instagramData).views.followers.percentage}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Non-followers</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof instagramData).views.nonFollowers.percentage}%</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-1">Accounts reached</p>
+                      <p className="text-2xl font-bold text-notion-text">{(data as typeof instagramData).views.accountsReached.toLocaleString()}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-notion-text">By content type</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2 mb-4">
+                      <Button variant="default" size="sm" className="rounded-full">All</Button>
+                      <Button variant="secondary" size="sm" className="rounded-full">Followers</Button>
+                      <Button variant="secondary" size="sm" className="rounded-full">Non-followers</Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {(data as typeof instagramData).views.contentBreakdown.map((item, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-notion-text">{item.type}</span>
+                            <span className="text-sm font-medium text-notion-text">{item.percentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`${item.color} h-2 rounded-full`} 
+                              style={{ width: `${item.percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        Followers
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        Non-followers
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Instagram Interactions Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Interactions</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof instagramData).interactions.totalInteractions}</p>
+                      <p className="text-sm text-notion-text-secondary">Interactions</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Followers</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof instagramData).interactions.followers.percentage}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Non-followers</span>
+                        <span className="text-sm font-medium text-notion-text">{(data as typeof instagramData).interactions.nonFollowers.percentage}%</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-notion-border">
+                      <p className="text-sm text-notion-text-secondary mb-1">Accounts engaged</p>
+                      <p className="text-2xl font-bold text-notion-text">{(data as typeof instagramData).interactions.accountsEngaged}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-notion-text">By content interactions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      {(data as typeof instagramData).interactions.contentBreakdown.map((item, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-notion-text">{item.type}</span>
+                            <span className="text-sm font-medium text-notion-text">{item.percentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`${item.color} h-2 rounded-full`} 
+                              style={{ width: `${item.percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        Followers and non-followers
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Instagram Profile & Followers Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Profile</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof instagramData).profile.profileActivity.toLocaleString()}</p>
+                      <p className="text-sm text-notion-text-secondary">Profile activity</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">Profile visits</span>
+                        <span className="text-lg font-medium text-notion-text">{(data as typeof instagramData).profile.profileVisits.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-notion-text">External link taps</span>
+                        <span className="text-lg font-medium text-notion-text">{(data as typeof instagramData).profile.externalLinkTaps}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-notion-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-notion-text-secondary" />
+                      <CardTitle className="text-notion-text">Followers</CardTitle>
+                      <Info className="h-4 w-4 text-notion-text-secondary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-3xl font-bold text-notion-text">{(data as typeof instagramData).followers.totalFollowers}</p>
+                      <p className="text-sm text-notion-text-secondary">Total followers</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-notion-text mb-3">Most active times</p>
+                      
+                      <div className="flex gap-1 mb-4">
+                        {['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'].map((day, index) => (
+                          <Button 
+                            key={day} 
+                            variant={index === 0 ? "default" : "secondary"} 
+                            size="sm" 
+                            className="w-10 h-8 text-xs rounded"
+                          >
+                            {day}
+                          </Button>
+                        ))}
+                      </div>
+
+                      <div className="space-y-2">
+                        {(data as typeof instagramData).followers.mostActiveTimes.map((time, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-sm text-notion-text w-8">{time.time}</span>
+                            <div className="flex-1 mx-3">
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-purple-500 h-2 rounded-full" 
+                                  style={{ width: `${time.percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            <span className="text-sm font-medium text-notion-text w-8 text-right">{time.count}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 text-xs text-notion-text-secondary">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          Followers
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Top Content Section */}
+              <Card className="border-notion-border">
                 <CardHeader>
-                  <CardTitle className="text-notion-text">Top content based on interactions</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-notion-text">Top content based on views</CardTitle>
+                    <Button variant="ghost" size="sm" className="text-notion-accent">See all</Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -494,17 +737,40 @@ export function AccountAnalytics({ platform }: AccountAnalyticsProps) {
                             <span className="text-gray-400">Content Preview</span>
                           </div>
                           <div className="space-y-2">
-                            <p className="text-lg font-semibold text-notion-text">{content.interactions}</p>
+                            <p className="text-lg font-semibold text-notion-text">{content.views}</p>
                             <p className="text-sm text-notion-text-secondary">{content.date}</p>
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
+                  
+                  <Card className="border-notion-border mt-6">
+                    <CardHeader>
+                      <CardTitle className="text-notion-text">Top content based on interactions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {topContent.map((content, index) => (
+                          <Card key={index} className="border-notion-border/50">
+                            <CardContent className="p-4 text-center">
+                              <div className="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                                <span className="text-gray-400">Content Preview</span>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-lg font-semibold text-notion-text">{content.interactions}</p>
+                                <p className="text-sm text-notion-text-secondary">{content.date}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </CardContent>
               </Card>
-            </CardContent>
-          </Card>
+            </>
+          )}
         </div>
       </div>
     </div>
