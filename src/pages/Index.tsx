@@ -44,11 +44,11 @@ const Index = () => {
 
   if (currentView === "portfolios") {
     return (
-        <PortfolioList 
-          onSelectPortfolio={handleSelectPortfolio}
-          onCreatePortfolio={handleCreatePortfolio}
-          onManageIntegrations={handleManageIntegrations}
-        />
+      <PortfolioList 
+        onSelectPortfolio={handleSelectPortfolio}
+        onCreatePortfolio={handleCreatePortfolio}
+        onManageIntegrations={handleManageIntegrations}
+      />
     );
   }
 
