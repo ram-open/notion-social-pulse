@@ -28,6 +28,11 @@ const Index = () => {
     console.log("Create new portfolio");
   };
 
+  const handleManageIntegrations = (portfolioId: string) => {
+    setSelectedPortfolioId(portfolioId);
+    setCurrentView("portfolio-detail");
+  };
+
   if (currentView === "portfolio-detail" && selectedPortfolioId) {
     return (
       <PortfolioDetail 
@@ -39,10 +44,11 @@ const Index = () => {
 
   if (currentView === "portfolios") {
     return (
-      <PortfolioList 
-        onSelectPortfolio={handleSelectPortfolio}
-        onCreatePortfolio={handleCreatePortfolio}
-      />
+        <PortfolioList 
+          onSelectPortfolio={handleSelectPortfolio}
+          onCreatePortfolio={handleCreatePortfolio}
+          onManageIntegrations={handleManageIntegrations}
+        />
     );
   }
 

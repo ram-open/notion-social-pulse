@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Users, TrendingUp } from "lucide-react";
+import { Building2, Plus, Users, TrendingUp, Settings } from "lucide-react";
+import { PortfolioManagementModal } from "./PortfolioManagementModal";
 
 interface Portfolio {
   id: string;
@@ -15,6 +17,7 @@ interface Portfolio {
 interface PortfolioListProps {
   onSelectPortfolio: (portfolioId: string) => void;
   onCreatePortfolio: () => void;
+  onManageIntegrations: (portfolioId: string) => void;
 }
 
 const mockPortfolios: Portfolio[] = [
@@ -44,7 +47,26 @@ const mockPortfolios: Portfolio[] = [
   },
 ];
 
-export function PortfolioList({ onSelectPortfolio, onCreatePortfolio }: PortfolioListProps) {
+export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIntegrations }: PortfolioListProps) {
+  const [portfolios, setPortfolios] = useState<Portfolio[]>(mockPortfolios);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEditPortfolio = (portfolio: Portfolio, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPortfolio(portfolio);
+    setIsModalOpen(true);
+  };
+
+  const handleSavePortfolio = (updatedPortfolio: Portfolio) => {
+    setPortfolios(portfolios.map(p => 
+      p.id === updatedPortfolio.id ? updatedPortfolio : p
+    ));
+  };
+
+  const handleDeletePortfolio = (portfolioId: string) => {
+    setPortfolios(portfolios.filter(p => p.id !== portfolioId));
+  };
   return (
     <div className="min-h-screen bg-notion-bg p-6">
       <div className="max-w-6xl mx-auto">
@@ -60,7 +82,7 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio }: Portfoli
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockPortfolios.map((portfolio) => (
+          {portfolios.map((portfolio) => (
             <Card 
               key={portfolio.id}
               className="cursor-pointer hover:shadow-notion-hover transition-all duration-200 border-notion-border"
@@ -71,7 +93,15 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio }: Portfoli
                   <div className="p-2 bg-notion-accent/10 rounded-lg">
                     <Building2 className="h-5 w-5 text-notion-accent" />
                   </div>
-                  <CardTitle className="text-xl text-notion-text">{portfolio.name}</CardTitle>
+                  <CardTitle className="text-xl text-notion-text flex-1">{portfolio.name}</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-notion-text-secondary hover:text-notion-text"
+                    onClick={(e) => handleEditPortfolio(portfolio, e)}
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
                 </div>
                 <p className="text-sm text-notion-text-secondary">{portfolio.description}</p>
               </CardHeader>
@@ -110,6 +140,17 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio }: Portfoli
             </Card>
           ))}
         </div>
+
+        {selectedPortfolio && (
+          <PortfolioManagementModal
+            portfolio={selectedPortfolio}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSavePortfolio}
+            onDelete={handleDeletePortfolio}
+            onManageIntegrations={onManageIntegrations}
+          />
+        )}
       </div>
     </div>
   );
