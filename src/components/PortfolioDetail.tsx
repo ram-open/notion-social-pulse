@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Instagram, Facebook, Linkedin, Settings } from "lucide-react";
 import { Dashboard } from "./Dashboard";
 import { AccountAnalytics } from "./AccountAnalytics";
+import { IntegrationSettings } from "./IntegrationSettings";
 
 interface PortfolioDetailProps {
   portfolioId: string;
@@ -41,10 +42,20 @@ const mockPortfolioData = {
 
 export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const portfolio = mockPortfolioData[portfolioId as keyof typeof mockPortfolioData];
 
   if (!portfolio) {
     return <div>Portfolio not found</div>;
+  }
+
+  if (showSettings) {
+    return (
+      <IntegrationSettings 
+        portfolioId={portfolioId}
+        onBack={() => setShowSettings(false)}
+      />
+    );
   }
 
   if (selectedPlatform) {
@@ -85,10 +96,19 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Portfolios
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-semibold text-notion-text">{portfolio.name}</h1>
             <p className="text-sm text-notion-text-secondary">{portfolio.description}</p>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSettings(true)}
+            className="text-notion-text-secondary hover:text-notion-text"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Integrations
+          </Button>
         </div>
       </div>
 
@@ -102,41 +122,67 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolio.platforms.map((platform) => {
               const IconComponent = platform.icon;
+              const isDisabled = platform.id === 'facebook';
+              
               return (
                 <Card 
                   key={platform.id}
-                  className="cursor-pointer hover:shadow-notion-hover transition-all duration-200 border-notion-border group"
-                  onClick={() => setSelectedPlatform(platform.id)}
+                  className={`transition-all duration-200 border-notion-border group ${
+                    isDisabled 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'cursor-pointer hover:shadow-notion-hover'
+                  }`}
+                  onClick={() => !isDisabled && setSelectedPlatform(platform.id)}
                 >
                   <CardHeader className="text-center pb-3">
-                    <div className="mx-auto p-3 bg-notion-accent/10 rounded-xl mb-3 group-hover:bg-notion-accent/20 transition-colors">
-                      <IconComponent className="h-8 w-8 text-notion-accent" />
+                    <div className={`mx-auto p-3 rounded-xl mb-3 transition-colors ${
+                      isDisabled 
+                        ? 'bg-gray-100' 
+                        : 'bg-notion-accent/10 group-hover:bg-notion-accent/20'
+                    }`}>
+                      <IconComponent className={`h-8 w-8 ${
+                        isDisabled ? 'text-gray-400' : 'text-notion-accent'
+                      }`} />
                     </div>
-                    <CardTitle className="text-xl text-notion-text">{platform.name}</CardTitle>
+                    <CardTitle className={`text-xl ${
+                      isDisabled ? 'text-gray-400' : 'text-notion-text'
+                    }`}>
+                      {platform.name}
+                    </CardTitle>
+                    {isDisabled && (
+                      <p className="text-sm text-gray-400 mt-1">In Development</p>
+                    )}
                   </CardHeader>
                   
                   <CardContent className="text-center space-y-3">
                     <div>
-                      <p className="text-2xl font-bold text-notion-text">{platform.followers}</p>
-                      <p className="text-sm text-notion-text-secondary">Followers</p>
+                      <p className={`text-2xl font-bold ${
+                        isDisabled ? 'text-gray-400' : 'text-notion-text'
+                      }`}>
+                        {platform.followers}
+                      </p>
+                      <p className={`text-sm ${
+                        isDisabled ? 'text-gray-400' : 'text-notion-text-secondary'
+                      }`}>
+                        Followers
+                      </p>
                     </div>
                     
                     <div className="flex items-center justify-center gap-2">
                       <Badge 
-                        variant={platform.connected ? "default" : "secondary"}
+                        variant={isDisabled ? "secondary" : (platform.connected ? "default" : "secondary")}
                         className="text-xs"
                       >
-                        {platform.connected ? "Connected" : "Not Connected"}
+                        {isDisabled ? "Coming Soon" : (platform.connected ? "Connected" : "Not Connected")}
                       </Badge>
-                      {platform.connected && (
+                      {platform.connected && !isDisabled && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-notion-text-secondary hover:text-notion-text"
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Handle configure action here
-                            console.log(`Configure ${platform.name} for ${portfolio.name}`);
+                            setShowSettings(true);
                           }}
                         >
                           <Settings className="h-3 w-3" />
