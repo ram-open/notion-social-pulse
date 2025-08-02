@@ -3,6 +3,7 @@ import { ConnectAccountsForm } from "@/components/ConnectAccountsForm";
 import { PortfolioList } from "@/components/PortfolioList";
 import { PortfolioDetail } from "@/components/PortfolioDetail";
 import { AuthForm } from "@/components/AuthForm";
+import { CreatePortfolioModal } from "@/components/CreatePortfolioModal";
 import { supabase } from "@/integrations/supabase/client";
 
 type ViewState = "auth" | "connect" | "portfolios" | "portfolio-detail";
@@ -11,6 +12,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewState>("auth");
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -54,8 +56,13 @@ const Index = () => {
   };
 
   const handleCreatePortfolio = () => {
-    // TODO: Implement portfolio creation
-    console.log("Create new portfolio");
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    // Force a re-render by changing the key or triggering a refresh
+    window.location.reload();
   };
 
   const handleManageIntegrations = (portfolioId: string) => {
@@ -74,11 +81,18 @@ const Index = () => {
 
   if (currentView === "portfolios") {
     return (
-      <PortfolioList 
-        onSelectPortfolio={handleSelectPortfolio}
-        onCreatePortfolio={handleCreatePortfolio}
-        onManageIntegrations={handleManageIntegrations}
-      />
+      <>
+        <PortfolioList 
+          onSelectPortfolio={handleSelectPortfolio}
+          onCreatePortfolio={handleCreatePortfolio}
+          onManageIntegrations={handleManageIntegrations}
+        />
+        <CreatePortfolioModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      </>
     );
   }
 
