@@ -1,13 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ConnectAccountsForm } from "@/components/ConnectAccountsForm";
 import { PortfolioList } from "@/components/PortfolioList";
 import { PortfolioDetail } from "@/components/PortfolioDetail";
+import { AuthForm } from "@/components/AuthForm";
+import { supabase } from "@/integrations/supabase/client";
 
-type ViewState = "connect" | "portfolios" | "portfolio-detail";
+type ViewState = "auth" | "connect" | "portfolios" | "portfolio-detail";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<ViewState>("connect");
+  const [currentView, setCurrentView] = useState<ViewState>("auth");
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUser(user);
+        setCurrentView("portfolios");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setCurrentView("portfolios");
+      } else {
+        setUser(null);
+        setCurrentView("auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuth = () => {
+    setCurrentView("portfolios");
+  };
 
   const handleConnect = () => {
     setCurrentView("portfolios");
@@ -52,7 +82,11 @@ const Index = () => {
     );
   }
 
-  return <ConnectAccountsForm onConnect={handleConnect} />;
+  if (currentView === "connect") {
+    return <ConnectAccountsForm onConnect={handleConnect} />;
+  }
+
+  return <AuthForm onAuth={handleAuth} />;
 };
 
 export default Index;

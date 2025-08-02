@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Plus, Users, TrendingUp, Settings } from "lucide-react";
 import { PortfolioManagementModal } from "./PortfolioManagementModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Portfolio {
   id: string;
@@ -12,6 +14,9 @@ interface Portfolio {
   platforms: string[];
   totalFollowers: number;
   engagementRate: number;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface PortfolioListProps {
@@ -20,37 +25,64 @@ interface PortfolioListProps {
   onManageIntegrations: (portfolioId: string) => void;
 }
 
-const mockPortfolios: Portfolio[] = [
-  {
-    id: "1",
-    name: "TechCorp Brand",
-    description: "Main corporate social media presence",
-    platforms: ["Instagram", "Facebook", "LinkedIn"],
-    totalFollowers: 125000,
-    engagementRate: 4.2,
-  },
-  {
-    id: "2", 
-    name: "TechCorp Careers",
-    description: "Recruitment and company culture content",
-    platforms: ["LinkedIn", "Instagram"],
-    totalFollowers: 45000,
-    engagementRate: 6.8,
-  },
-  {
-    id: "3",
-    name: "TechCorp Products",
-    description: "Product announcements and updates",
-    platforms: ["Instagram", "Facebook"],
-    totalFollowers: 89000,
-    engagementRate: 3.9,
-  },
-];
-
 export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIntegrations }: PortfolioListProps) {
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(mockPortfolios);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchPortfolios();
+  }, []);
+
+  const fetchPortfolios = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('portfolios')
+        .select(`
+          *,
+          portfolio_platforms (
+            platform_id,
+            followers,
+            is_connected,
+            platforms (name)
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const formattedPortfolios: Portfolio[] = data.map(portfolio => ({
+        id: portfolio.id,
+        name: portfolio.name,
+        description: portfolio.description || '',
+        platforms: portfolio.portfolio_platforms?.map((pp: any) => pp.platforms.name) || [],
+        totalFollowers: portfolio.total_followers || 0,
+        engagementRate: Number(portfolio.engagement_rate) || 0,
+        user_id: portfolio.user_id,
+        created_at: portfolio.created_at,
+        updated_at: portfolio.updated_at
+      }));
+
+      setPortfolios(formattedPortfolios);
+    } catch (error) {
+      console.error('Error fetching portfolios:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load portfolios",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditPortfolio = (portfolio: Portfolio, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,14 +90,59 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIn
     setIsModalOpen(true);
   };
 
-  const handleSavePortfolio = (updatedPortfolio: Portfolio) => {
-    setPortfolios(portfolios.map(p => 
-      p.id === updatedPortfolio.id ? updatedPortfolio : p
-    ));
+  const handleSavePortfolio = async (updatedPortfolio: Portfolio) => {
+    try {
+      const { error } = await supabase
+        .from('portfolios')
+        .update({
+          name: updatedPortfolio.name,
+          description: updatedPortfolio.description
+        })
+        .eq('id', updatedPortfolio.id);
+
+      if (error) throw error;
+
+      setPortfolios(portfolios.map(p => 
+        p.id === updatedPortfolio.id ? updatedPortfolio : p
+      ));
+
+      toast({
+        title: "Success",
+        description: "Portfolio updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating portfolio:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update portfolio",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeletePortfolio = (portfolioId: string) => {
-    setPortfolios(portfolios.filter(p => p.id !== portfolioId));
+  const handleDeletePortfolio = async (portfolioId: string) => {
+    try {
+      const { error } = await supabase
+        .from('portfolios')
+        .delete()
+        .eq('id', portfolioId);
+
+      if (error) throw error;
+
+      setPortfolios(portfolios.filter(p => p.id !== portfolioId));
+      
+      toast({
+        title: "Success",
+        description: "Portfolio deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting portfolio:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete portfolio",
+        variant: "destructive"
+      });
+    }
   };
   return (
     <div className="min-h-screen bg-notion-bg p-6">
@@ -81,8 +158,17 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIn
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {portfolios.map((portfolio) => (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-notion-text-secondary">Loading portfolios...</p>
+          </div>
+        ) : portfolios.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-notion-text-secondary">No portfolios found. Create your first portfolio to get started.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {portfolios.map((portfolio) => (
             <Card 
               key={portfolio.id}
               className="cursor-pointer hover:shadow-notion-hover transition-all duration-200 border-notion-border"
@@ -138,8 +224,9 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIn
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {selectedPortfolio && (
           <PortfolioManagementModal
