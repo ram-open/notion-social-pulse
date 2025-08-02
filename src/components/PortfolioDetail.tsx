@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,47 +6,134 @@ import { ArrowLeft, Instagram, Facebook, Linkedin, Settings } from "lucide-react
 import { Dashboard } from "./Dashboard";
 import { AccountAnalytics } from "./AccountAnalytics";
 import { IntegrationSettings } from "./IntegrationSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Portfolio {
+  id: string;
+  name: string;
+  description: string;
+  user_id: string;
+  total_followers: number;
+  engagement_rate: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Platform {
+  id: string;
+  name: string;
+  icon: any;
+  followers: string;
+  connected: boolean;
+}
 
 interface PortfolioDetailProps {
   portfolioId: string;
   onBack: () => void;
 }
 
-const mockPortfolioData = {
-  "1": {
-    name: "TechCorp Brand",
-    description: "Main corporate social media presence",
-    platforms: [
-      { id: "instagram", name: "Instagram", icon: Instagram, followers: "45K", connected: true },
-      { id: "facebook", name: "Facebook", icon: Facebook, followers: "62K", connected: true },
-      { id: "linkedin", name: "LinkedIn", icon: Linkedin, followers: "18K", connected: true },
-    ],
-  },
-  "2": {
-    name: "TechCorp Careers", 
-    description: "Recruitment and company culture content",
-    platforms: [
-      { id: "linkedin", name: "LinkedIn", icon: Linkedin, followers: "32K", connected: true },
-      { id: "instagram", name: "Instagram", icon: Instagram, followers: "13K", connected: true },
-    ],
-  },
-  "3": {
-    name: "TechCorp Products",
-    description: "Product announcements and updates", 
-    platforms: [
-      { id: "instagram", name: "Instagram", icon: Instagram, followers: "67K", connected: true },
-      { id: "facebook", name: "Facebook", icon: Facebook, followers: "22K", connected: true },
-    ],
-  },
+const platformIcons = {
+  instagram: Instagram,
+  facebook: Facebook,
+  linkedin: Linkedin,
 };
 
 export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const portfolio = mockPortfolioData[portfolioId as keyof typeof mockPortfolioData];
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchPortfolioData();
+  }, [portfolioId]);
+
+  const fetchPortfolioData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "User not authenticated",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch portfolio data
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from('portfolios')
+        .select('*')
+        .eq('id', portfolioId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (portfolioError) throw portfolioError;
+      
+      if (!portfolioData) {
+        setPortfolio(null);
+        setLoading(false);
+        return;
+      }
+
+      setPortfolio(portfolioData);
+
+      // Fetch platform connections
+      const { data: portfolioPlatforms, error: platformError } = await supabase
+        .from('portfolio_platforms')
+        .select(`
+          *,
+          platforms (*)
+        `)
+        .eq('portfolio_id', portfolioId);
+
+      if (platformError) throw platformError;
+
+      // Format platforms data
+      const formattedPlatforms: Platform[] = portfolioPlatforms?.map((pp: any) => ({
+        id: pp.platform_id,
+        name: pp.platforms.name,
+        icon: platformIcons[pp.platform_id as keyof typeof platformIcons] || Instagram,
+        followers: pp.followers ? (pp.followers > 1000 ? `${Math.round(pp.followers / 1000)}K` : pp.followers.toString()) : '0',
+        connected: pp.is_connected || false
+      })) || [];
+
+      setPlatforms(formattedPlatforms);
+    } catch (error: any) {
+      console.error('Error fetching portfolio data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load portfolio data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-notion-bg flex items-center justify-center">
+        <p className="text-notion-text-secondary">Loading portfolio...</p>
+      </div>
+    );
+  }
 
   if (!portfolio) {
-    return <div>Portfolio not found</div>;
+    return (
+      <div className="min-h-screen bg-notion-bg flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-notion-text-secondary mb-4">Portfolio not found</p>
+          <Button onClick={onBack} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Portfolios
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (showSettings) {
@@ -98,7 +185,7 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
           </Button>
           <div className="flex-1">
             <h1 className="text-xl font-semibold text-notion-text">{portfolio.name}</h1>
-            <p className="text-sm text-notion-text-secondary">{portfolio.description}</p>
+            <p className="text-sm text-notion-text-secondary">{portfolio.description || 'No description'}</p>
           </div>
           <Button
             variant="ghost"
@@ -120,7 +207,16 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {portfolio.platforms.map((platform) => {
+            {platforms.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-notion-text-secondary mb-4">No platforms connected</p>
+                <Button onClick={() => setShowSettings(true)} variant="outline">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Connect Platforms
+                </Button>
+              </div>
+            ) : (
+              platforms.map((platform) => {
               const IconComponent = platform.icon;
               const isDisabled = platform.id === 'facebook';
               
@@ -192,7 +288,7 @@ export function PortfolioDetail({ portfolioId, onBack }: PortfolioDetailProps) {
                   </CardContent>
                 </Card>
               );
-            })}
+            }))}
           </div>
         </div>
       </div>
