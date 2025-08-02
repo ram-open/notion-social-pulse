@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      platforms: {
+        Row: {
+          icon_name: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          icon_name: string
+          id: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          icon_name?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      portfolio_platforms: {
+        Row: {
+          created_at: string
+          followers: number | null
+          id: string
+          is_connected: boolean | null
+          platform_id: string
+          portfolio_id: string
+        }
+        Insert: {
+          created_at?: string
+          followers?: number | null
+          id?: string
+          is_connected?: boolean | null
+          platform_id: string
+          portfolio_id: string
+        }
+        Update: {
+          created_at?: string
+          followers?: number | null
+          id?: string
+          is_connected?: boolean | null
+          platform_id?: string
+          portfolio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_platforms_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_platforms_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolios: {
+        Row: {
+          created_at: string
+          description: string | null
+          engagement_rate: number | null
+          id: string
+          name: string
+          total_followers: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          engagement_rate?: number | null
+          id?: string
+          name: string
+          total_followers?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          engagement_rate?: number | null
+          id?: string
+          name?: string
+          total_followers?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
