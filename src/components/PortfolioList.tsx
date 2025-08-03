@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Users, TrendingUp, Settings } from "lucide-react";
+import { Building2, Plus, Users, TrendingUp, Settings, LogOut } from "lucide-react";
 import { PortfolioManagementModal } from "./PortfolioManagementModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -144,6 +144,25 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIn
       });
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Logged out successfully"
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log out",
+        variant: "destructive"
+      });
+    }
+  };
   return (
     <div className="min-h-screen bg-notion-bg p-6">
       <div className="max-w-6xl mx-auto">
@@ -152,10 +171,20 @@ export function PortfolioList({ onSelectPortfolio, onCreatePortfolio, onManageIn
             <h1 className="text-3xl font-bold text-notion-text mb-2">Portfolios</h1>
             <p className="text-notion-text-secondary">Manage your brand social media portfolios</p>
           </div>
-          <Button onClick={onCreatePortfolio} className="h-11 px-6">
-            <Plus className="h-4 w-4 mr-2" />
-            New Portfolio
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={onCreatePortfolio} className="h-11 px-6">
+              <Plus className="h-4 w-4 mr-2" />
+              New Portfolio
+            </Button>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              className="h-11 px-6"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {loading ? (

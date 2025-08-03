@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Instagram, Linkedin, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface IntegrationSettingsProps {
   portfolioId: string;
@@ -17,32 +18,120 @@ export function IntegrationSettings({ portfolioId, onBack }: IntegrationSettings
     instagram: { connected: false, accessToken: "", accountId: "" },
     linkedin: { connected: false, accessToken: "", organizationId: "" }
   });
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleConnect = async (platform: 'instagram' | 'linkedin') => {
-    // In a real implementation, this would redirect to OAuth flow
-    toast.success(`Redirecting to ${platform === 'instagram' ? 'Meta' : 'LinkedIn'} OAuth...`);
-    
-    // Simulate OAuth connection
-    setTimeout(() => {
+  useEffect(() => {
+    fetchIntegrations();
+  }, [portfolioId]);
+
+  const fetchIntegrations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_platforms')
+        .select('platform_id, is_connected')
+        .eq('portfolio_id', portfolioId);
+
+      if (error) throw error;
+
+      const platformData = data.reduce((acc, platform) => {
+        acc[platform.platform_id] = {
+          connected: platform.is_connected,
+          accessToken: "",
+          accountId: platform.platform_id === 'instagram' ? 'Connected Account' : 'Connected Organization'
+        };
+        return acc;
+      }, {} as any);
+
       setIntegrations(prev => ({
         ...prev,
-        [platform]: {
-          ...prev[platform],
-          connected: true,
-          accessToken: `mock_token_${Date.now()}`,
-          accountId: platform === 'instagram' ? 'ig_account_123' : 'li_org_456'
-        }
+        ...platformData
       }));
-      toast.success(`${platform === 'instagram' ? 'Instagram' : 'LinkedIn'} connected successfully!`);
-    }, 2000);
+    } catch (error) {
+      console.error('Error fetching integrations:', error);
+    }
   };
 
-  const handleDisconnect = (platform: 'instagram' | 'linkedin') => {
-    setIntegrations(prev => ({
-      ...prev,
-      [platform]: { connected: false, accessToken: "", accountId: "" }
-    }));
-    toast.success(`${platform === 'instagram' ? 'Instagram' : 'LinkedIn'} disconnected`);
+  const handleConnect = async (platform: 'instagram' | 'linkedin') => {
+    setLoading(true);
+    
+    try {
+      if (platform === 'instagram') {
+        // For Instagram, we need Meta App credentials
+        const appId = 'YOUR_META_APP_ID'; // This should come from environment
+        const redirectUri = encodeURIComponent(window.location.origin);
+        const scope = 'instagram_basic,instagram_manage_insights,pages_show_list';
+        
+        const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+        
+        // Open OAuth popup
+        const popup = window.open(authUrl, 'instagram-auth', 'width=600,height=600');
+        
+        // Listen for OAuth completion (you'd need to implement the callback handling)
+        toast({
+          title: "OAuth Flow",
+          description: "Complete the Instagram authorization in the popup window"
+        });
+        
+      } else if (platform === 'linkedin') {
+        // For LinkedIn, we need LinkedIn App credentials  
+        const clientId = 'YOUR_LINKEDIN_CLIENT_ID'; // This should come from environment
+        const redirectUri = encodeURIComponent(window.location.origin);
+        const scope = 'r_liteprofile,r_emailaddress,w_member_social';
+        
+        const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+        
+        // Open OAuth popup
+        const popup = window.open(authUrl, 'linkedin-auth', 'width=600,height=600');
+        
+        toast({
+          title: "OAuth Flow",
+          description: "Complete the LinkedIn authorization in the popup window"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error initiating OAuth:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start authorization process",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async (platform: 'instagram' | 'linkedin') => {
+    try {
+      const { error } = await supabase
+        .from('portfolio_platforms')
+        .update({ 
+          is_connected: false,
+          followers: 0 
+        })
+        .eq('portfolio_id', portfolioId)
+        .eq('platform_id', platform);
+
+      if (error) throw error;
+
+      setIntegrations(prev => ({
+        ...prev,
+        [platform]: { connected: false, accessToken: "", accountId: "" }
+      }));
+      
+      toast({
+        title: "Success",
+        description: `${platform === 'instagram' ? 'Instagram' : 'LinkedIn'} disconnected`
+      });
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to disconnect platform",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -122,8 +211,11 @@ export function IntegrationSettings({ portfolioId, onBack }: IntegrationSettings
                   <p className="text-sm text-notion-text-secondary mb-3">
                     Connect your Instagram Business account to access metrics like reach, impressions, and engagement.
                   </p>
-                  <Button onClick={() => handleConnect('instagram')}>
-                    Connect Instagram
+                  <Button 
+                    onClick={() => handleConnect('instagram')}
+                    disabled={loading}
+                  >
+                    {loading ? 'Connecting...' : 'Connect Instagram'}
                   </Button>
                 </div>
               )}
@@ -184,8 +276,11 @@ export function IntegrationSettings({ portfolioId, onBack }: IntegrationSettings
                   <p className="text-sm text-notion-text-secondary mb-3">
                     Connect your LinkedIn Company Page to access impressions, reactions, and follower growth data.
                   </p>
-                  <Button onClick={() => handleConnect('linkedin')}>
-                    Connect LinkedIn
+                  <Button 
+                    onClick={() => handleConnect('linkedin')}
+                    disabled={loading}
+                  >
+                    {loading ? 'Connecting...' : 'Connect LinkedIn'}
                   </Button>
                 </div>
               )}
