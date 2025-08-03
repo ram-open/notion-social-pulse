@@ -23,11 +23,11 @@ export function CreatePortfolioModal({ isOpen, onClose, onSuccess }: CreatePortf
   const { toast } = useToast();
 
   const socialPlatforms = [
-    { id: "instagram", name: "Instagram", icon: Instagram, color: "text-pink-600" },
-    { id: "facebook", name: "Facebook", icon: Facebook, color: "text-blue-600" },
-    { id: "linkedin", name: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
-    { id: "twitter", name: "Twitter", icon: Twitter, color: "text-blue-400" },
-    { id: "youtube", name: "YouTube", icon: Youtube, color: "text-red-600" }
+    { id: "instagram", name: "Instagram", icon: Instagram, color: "text-pink-600", available: true },
+    { id: "linkedin", name: "LinkedIn", icon: Linkedin, color: "text-blue-700", available: true },
+    { id: "facebook", name: "Facebook", icon: Facebook, color: "text-blue-600", available: false },
+    { id: "twitter", name: "Twitter", icon: Twitter, color: "text-blue-400", available: false },
+    { id: "youtube", name: "YouTube", icon: Youtube, color: "text-red-600", available: false }
   ];
 
   const handleClose = () => {
@@ -97,12 +97,22 @@ export function CreatePortfolioModal({ isOpen, onClose, onSuccess }: CreatePortf
     }
   };
 
-  const handleConnectPlatform = (platformId: string) => {
-    // TODO: Implement actual platform connection
-    toast({
-      title: "Coming Soon",
-      description: `${platformId} connection will be available soon!`,
-    });
+  const handleConnectPlatform = async (platform: any) => {
+    if (!platform.available) {
+      toast({
+        title: "Coming Soon",
+        description: `${platform.name} connection will be available soon!`,
+      });
+      return;
+    }
+
+    if (platform.id === "instagram") {
+      // Redirect to Instagram OAuth
+      window.open(`https://api.instagram.com/oauth/authorize?client_id=YOUR_INSTAGRAM_CLIENT_ID&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=user_profile,user_media&response_type=code`, '_blank');
+    } else if (platform.id === "linkedin") {
+      // Redirect to LinkedIn OAuth
+      window.open(`https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=YOUR_LINKEDIN_CLIENT_ID&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=profile%20email`, '_blank');
+    }
   };
 
   return (
@@ -159,11 +169,12 @@ export function CreatePortfolioModal({ isOpen, onClose, onSuccess }: CreatePortf
                           <span className="font-medium">{platform.name}</span>
                         </div>
                         <Button 
-                          variant="outline" 
+                          variant={platform.available ? "outline" : "secondary"} 
                           size="sm"
-                          onClick={() => handleConnectPlatform(platform.name)}
+                          onClick={() => handleConnectPlatform(platform)}
+                          disabled={!platform.available}
                         >
-                          Connect
+                          {platform.available ? "Connect" : "Coming Soon"}
                         </Button>
                       </div>
                     </CardContent>
