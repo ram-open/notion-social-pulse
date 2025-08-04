@@ -31,18 +31,65 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { action, portfolioId, accessToken } = await req.json()
+    const metaAppId = Deno.env.get('META_APP_ID')
+    const metaAppSecret = Deno.env.get('META_APP_SECRET')
+
+    if (!metaAppId || !metaAppSecret) {
+      throw new Error('Meta credentials not configured')
+    }
+
+    const { action, portfolioId, code, redirectUri } = await req.json()
+
+    if (action === 'get-auth-url') {
+      // Generate Instagram OAuth URL
+      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${metaAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code`
+      
+      return new Response(
+        JSON.stringify({ success: true, authUrl }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
 
     if (action === 'connect') {
-      // Validate Instagram access token and get user info
-      const instagramApiUrl = `https://graph.instagram.com/me?fields=id,username,followers_count,media_count&access_token=${accessToken}`
-      
-      const response = await fetch(instagramApiUrl)
-      const instagramData = await response.json()
-
-      if (!response.ok) {
-        throw new Error(instagramData.error?.message || 'Failed to validate Instagram token')
+      if (!code) {
+        throw new Error('Authorization code is required')
       }
+
+      // Exchange authorization code for access token
+      const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: metaAppId,
+          client_secret: metaAppSecret,
+          grant_type: 'authorization_code',
+          redirect_uri: redirectUri,
+          code: code,
+        }),
+      })
+
+      const tokenData = await tokenResponse.json()
+
+      if (!tokenResponse.ok) {
+        throw new Error(tokenData.error_description || 'Failed to exchange code for token')
+      }
+
+      // Get user info using the access token
+      const userResponse = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${tokenData.access_token}`)
+      const userData = await userResponse.json()
+
+      if (!userResponse.ok) {
+        throw new Error(userData.error?.message || 'Failed to get user info')
+      }
+
+      // Get follower count using the long-lived token
+      const followerResponse = await fetch(`https://graph.instagram.com/${userData.id}?fields=followers_count,media_count&access_token=${tokenData.access_token}`)
+      const followerData = await followerResponse.json()
 
       // Update portfolio platform connection
       const { error: updateError } = await supabaseClient
@@ -51,7 +98,7 @@ serve(async (req) => {
           portfolio_id: portfolioId,
           platform_id: 'instagram',
           is_connected: true,
-          followers: instagramData.followers_count || 0,
+          followers: followerData.followers_count || 0,
         })
 
       if (updateError) throw updateError
@@ -60,9 +107,9 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           data: {
-            username: instagramData.username,
-            followers: instagramData.followers_count,
-            media_count: instagramData.media_count
+            username: userData.username,
+            followers: followerData.followers_count || 0,
+            media_count: followerData.media_count || 0
           }
         }),
         {
