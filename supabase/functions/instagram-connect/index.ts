@@ -41,8 +41,12 @@ serve(async (req) => {
     const { action, portfolioId, code, redirectUri } = await req.json()
 
     if (action === 'get-auth-url') {
-      // Generate Instagram OAuth URL
+      // Generate Instagram Basic Display API OAuth URL
       const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${metaAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code`
+      
+      console.log('Generated auth URL:', authUrl)
+      console.log('Meta App ID:', metaAppId)
+      console.log('Redirect URI:', redirectUri)
       
       return new Response(
         JSON.stringify({ success: true, authUrl }),
