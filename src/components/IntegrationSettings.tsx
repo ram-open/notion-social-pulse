@@ -57,19 +57,35 @@ export function IntegrationSettings({ portfolioId, onBack }: IntegrationSettings
     
     try {
       if (platform === 'instagram') {
-        // For Instagram, we need Meta App credentials
-        const appId = 'YOUR_META_APP_ID'; // This should come from environment
-        const redirectUri = encodeURIComponent(window.location.origin);
-        const scope = 'instagram_basic,instagram_manage_insights,pages_show_list';
+        // Get OAuth URL from edge function
+        const redirectUri = `${window.location.origin}/auth/callback?platform=instagram&portfolio_id=${portfolioId}`;
         
-        const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
-        
+        const { data, error } = await supabase.functions.invoke('instagram-connect', {
+          body: { 
+            action: 'get-auth-url', 
+            portfolioId,
+            redirectUri 
+          }
+        });
+
+        if (error) throw error;
+        if (!data.success) throw new Error('Failed to get auth URL');
+
         // Open OAuth popup
-        const popup = window.open(authUrl, 'instagram-auth', 'width=600,height=600');
+        const popup = window.open(data.authUrl, 'instagram-auth', 'width=600,height=600');
         
-        // Listen for OAuth completion (you'd need to implement the callback handling)
+        // Listen for OAuth completion
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            setLoading(false);
+            // Refresh integrations to see if connection was successful
+            fetchIntegrations();
+          }
+        }, 1000);
+
         toast({
-          title: "OAuth Flow",
+          title: "Instagram Authorization",
           description: "Complete the Instagram authorization in the popup window"
         });
         
