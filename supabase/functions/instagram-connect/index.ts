@@ -41,8 +41,8 @@ serve(async (req) => {
     const { action, portfolioId, code, redirectUri } = await req.json()
 
     if (action === 'get-auth-url') {
-      // Generate Instagram Basic Display API OAuth URL
-      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${metaAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code`
+      // Generate Instagram Graph API OAuth URL
+      const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${metaAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=instagram_basic,pages_show_list&response_type=code`
       
       console.log('Generated auth URL:', authUrl)
       console.log('Meta App ID:', metaAppId)
@@ -62,8 +62,8 @@ serve(async (req) => {
         throw new Error('Authorization code is required')
       }
 
-      // Exchange authorization code for access token
-      const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
+      // Exchange authorization code for access token using Facebook Graph API
+      const tokenResponse = await fetch('https://graph.facebook.com/v18.0/oauth/access_token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -83,17 +83,28 @@ serve(async (req) => {
         throw new Error(tokenData.error_description || 'Failed to exchange code for token')
       }
 
-      // Get user info using the access token
-      const userResponse = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${tokenData.access_token}`)
+      // Get user info and pages using the access token
+      const userResponse = await fetch(`https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${tokenData.access_token}`)
       const userData = await userResponse.json()
 
       if (!userResponse.ok) {
         throw new Error(userData.error?.message || 'Failed to get user info')
       }
 
-      // Get follower count using the long-lived token
-      const followerResponse = await fetch(`https://graph.instagram.com/${userData.id}?fields=followers_count,media_count&access_token=${tokenData.access_token}`)
-      const followerData = await followerResponse.json()
+      // Get Instagram business account from pages
+      const pagesResponse = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=instagram_business_account&access_token=${tokenData.access_token}`)
+      const pagesData = await pagesResponse.json()
+      
+      let followerData = { followers_count: 0, media_count: 0 }
+      
+      if (pagesData.data && pagesData.data.length > 0) {
+        const instagramAccount = pagesData.data.find(page => page.instagram_business_account)
+        if (instagramAccount?.instagram_business_account) {
+          const igAccountId = instagramAccount.instagram_business_account.id
+          const followerResponse = await fetch(`https://graph.facebook.com/v18.0/${igAccountId}?fields=followers_count,media_count&access_token=${tokenData.access_token}`)
+          followerData = await followerResponse.json()
+        }
+      }
 
       // Update portfolio platform connection
       const { error: updateError } = await supabaseClient
@@ -111,7 +122,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           data: {
-            username: userData.username,
+            username: userData.name,
             followers: followerData.followers_count || 0,
             media_count: followerData.media_count || 0
           }
